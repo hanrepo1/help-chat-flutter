@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -7,18 +9,34 @@ import 'package:help_chat/page/user/chat_page.dart';
 import 'package:help_chat/services/chat_service.dart';
 
 class InquiryPage extends StatefulWidget {
-  // final Recipe recipe;
+  final String? userId;
+  final String? username;
 
-  // InquiryPage({
-  //   required this.recipe,
-  // });
-  const InquiryPage({super.key});
+  const InquiryPage({super.key, this.username, this.userId});
   @override
   State<InquiryPage> createState() => _InquiryPageState();
 }
 
 class _InquiryPageState extends State<InquiryPage> {
   final ChatService chatService = ChatService();
+  final nameController = TextEditingController();
+  final inquiryController = TextEditingController();
+  late String? userId = "";
+  late bool? isUser;
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      if (widget.username == null || widget.username!.isEmpty) {
+        isUser = false;
+      } else {
+        nameController.text = widget.username!;
+        userId = widget.userId;
+        isUser = true;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +55,7 @@ class _InquiryPageState extends State<InquiryPage> {
             const SizedBox(
               height: 5,
             ),
-            _buildUI(),
+            isUser == null ? const Center(child: CircularProgressIndicator(),) : _buildUI(),
           ],
         ),
       ),
@@ -45,9 +63,6 @@ class _InquiryPageState extends State<InquiryPage> {
   }
 
   Widget _buildUI() {
-    final nameController = TextEditingController();
-    final inquiryController = TextEditingController();
-
     return SafeArea(
       child: Form(
         // key: _formKey,
@@ -57,6 +72,7 @@ class _InquiryPageState extends State<InquiryPage> {
             SizedBox(
                 width: MediaQuery.of(context).size.width * 0.9,
                 child: MyTextField(
+                    enable: !isUser!,
                     controller: nameController,
                     hintText: 'Name',
                     obscureText: false,
@@ -99,6 +115,7 @@ class _InquiryPageState extends State<InquiryPage> {
                 onPressed: () async {
                   // Call the startChat method to create a chat room
                   ChatRoom? chatRoom = await chatService.startChat(
+                    userId,
                     nameController.text,
                     inquiryController.text,
                   );

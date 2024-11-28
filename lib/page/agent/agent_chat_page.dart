@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:help_chat/models/quick_text.dart';
+import 'package:help_chat/services/quick_text_service.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:help_chat/components/my_text_field.dart';
@@ -19,13 +21,16 @@ class AgentChatPage extends StatefulWidget {
 
 class _AgentChatPageStates extends State<AgentChatPage> {
   final ChatService chatService = ChatService();
+  final QuickTextService quickTextService = QuickTextService();
   final String WEBSOCKET_PATH = "ws://192.168.18.112:8080/chat/websocket";
   late StompClient stompClient;
 
   final TextEditingController _controller = TextEditingController();
   late ChatRoom chatRoom;
   late List<ChatContent> chatContent = [];
+  late List<QuickText> listQuickText= [];
   bool isLoading = false;
+  bool quickText = false;
 
   DateTime epoch = DateTime.now();
 
@@ -34,7 +39,8 @@ class _AgentChatPageStates extends State<AgentChatPage> {
     super.initState();
     chatRoom = widget.chatRoom!;
     getData();
-    
+    getQuickText();
+
     log('initState: ${chatRoom.toJson()}');
 
     stompClient = StompClient(
@@ -86,7 +92,8 @@ class _AgentChatPageStates extends State<AgentChatPage> {
     });
     log("fetching chat rooms...");
     try {
-      final fetchedChatContent = await chatService.getChatContent(chatRoom.roomId!);
+      final fetchedChatContent =
+          await chatService.getChatContent(chatRoom.roomId!);
       log("Fetched chat content: ${fetchedChatContent}");
       if (fetchedChatContent != null && fetchedChatContent.isNotEmpty) {
         setState(() {
@@ -98,6 +105,28 @@ class _AgentChatPageStates extends State<AgentChatPage> {
       }
     } catch (e) {
       log("Error fetching chat rooms: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> getQuickText() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final fetchQuickText = await quickTextService.getQuickText();
+      if (fetchQuickText != null && fetchQuickText.isNotEmpty) {
+        setState(() {
+          listQuickText = fetchQuickText;
+        });
+      } else {
+        log("No quick text fetched or fetched content is empty.");
+      }
+    } catch (e) {
+      log("Error fetching quick text: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -132,6 +161,18 @@ class _AgentChatPageStates extends State<AgentChatPage> {
       final messageData = ChatContent.fromJson(jsonDecode(messageBody));
       setState(() {
         chatContent.add(messageData); // Add the new message
+      });
+    }
+  }
+
+  void _onTextChanged(String text) {
+    if (text.isNotEmpty && text[0] == '/') {
+      setState(() {
+        quickText = true;
+      });
+    } else {
+      setState(() {
+        quickText = false;
       });
     }
   }
@@ -190,6 +231,7 @@ class _AgentChatPageStates extends State<AgentChatPage> {
       child: Column(
         children: [
           _chatHistory(),
+          if(quickText) _listQuickText(),
           _textInput(),
         ],
       ),
@@ -219,6 +261,30 @@ class _AgentChatPageStates extends State<AgentChatPage> {
     );
   }
 
+  Widget _listQuickText() {
+    return Container(
+      color: Colors.white,
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: listQuickText.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(listQuickText[index].message.toString()),
+            onTap: () {
+              _controller.text = listQuickText[index].message.toString();
+              _controller.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _controller.text.length)); // Move cursor to the end
+              setState(() {
+                quickText = false; // Hide suggestions after selection
+              });
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _textInput() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -231,7 +297,10 @@ class _AgentChatPageStates extends State<AgentChatPage> {
               obscureText: false,
               hintText: "Send a Message",
               maxLength: 255,
-              maxLines: 3,
+              maxLines: 1,
+              onChanged: (val) {
+                _onTextChanged(val!);
+              },
               suffixIcon: IconButton(
                 onPressed: () {
                   if (_controller.text.isNotEmpty) {

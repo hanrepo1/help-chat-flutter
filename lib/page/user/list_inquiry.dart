@@ -4,17 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:help_chat/models/chat_room.dart';
 import 'package:help_chat/page/agent/agent_chat_page.dart';
+import 'package:help_chat/page/user/chat_page.dart';
 import 'package:help_chat/services/chat_service.dart';
 import 'package:intl/intl.dart';
 
-class ListRoom extends StatefulWidget {
-  const ListRoom({super.key});
+class ListInquiry extends StatefulWidget {
+  final String userId;
+  const ListInquiry({super.key, required this.userId});
 
   @override
-  State<ListRoom> createState() => _ListRoomState();
+  State<ListInquiry> createState() => _ListInquiryState();
 }
 
-class _ListRoomState extends State<ListRoom> {
+class _ListInquiryState extends State<ListInquiry> {
   final ChatService chatService = ChatService();
   bool isLoading = false;
   late List<ChatRoom> chatRoom = [];
@@ -31,7 +33,7 @@ class _ListRoomState extends State<ListRoom> {
       isLoading = true;
     });
     try {
-      chatRoom = (await chatService.getRooms())!;
+      chatRoom = (await chatService.getRoomsByUser(widget.userId))!;
       log("get Data: ${chatRoom.length.toString()}"); // Fetch chat rooms
     } catch (e) {
       // Handle any errors here
@@ -54,7 +56,7 @@ class _ListRoomState extends State<ListRoom> {
 
   @override
   Widget build(BuildContext context) {
-    
+    log("build: ${chatRoom.length.toString()}");
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -69,7 +71,6 @@ class _ListRoomState extends State<ListRoom> {
   }
 
   Widget _buildUI() {
-    log("build: ${chatRoom.length.toString()}");
     return Padding(
       padding: const EdgeInsets.all(
         10.0,
@@ -96,7 +97,7 @@ class _ListRoomState extends State<ListRoom> {
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      return AgentChatPage(
+                      return ChatPage(
                         chatRoom: listRoom,
                       );
                     },

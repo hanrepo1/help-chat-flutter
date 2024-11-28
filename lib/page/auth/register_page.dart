@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:help_chat/components/my_text_field.dart';
@@ -26,6 +28,35 @@ class _RegisterPageState extends State<RegisterPage> {
   bool containsNumber = false;
   bool containsSpecialChar = false;
   bool contains8Length = false;
+
+  void snackError(String? message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message!),
+        backgroundColor: Colors.red, // Optional: Change color for error
+      ),
+    );
+  }
+
+  void displayDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Registration Successful !"),
+          content: const Text("Please refer to the login page."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,46 +252,29 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: TextButton(
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          setState(() async {
+                          setState(() {
                             signUpRequired = true;
                           });
+                          
                           RegisterDTO registerDTO = RegisterDTO.empty;
                           registerDTO.username = nameController.text;
                           registerDTO.email = emailController.text;
                           registerDTO.password = passwordController.text;
+                          log(registerDTO.username);
+                          log(registerDTO.email);
+                          log(registerDTO.password);
 
                           String? regisContext =
                               await authService.register(registerDTO);
 
                           if (regisContext != null) {
-                            // Show the error message in a Snackbar
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(regisContext),
-                                backgroundColor: Colors
-                                    .red, // Optional: Change color for error
-                              ),
-                            );
+                            snackError(regisContext);
                           } else {
-                            // Handle successful login if needed
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text("Registration Successful !"),
-                                  content: const Text("Please refer to the login page."),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                            displayDialog();
                           }
+                          setState(() {
+                            signUpRequired = false;
+                          });
                         }
                       },
                       style: TextButton.styleFrom(

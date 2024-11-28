@@ -18,7 +18,18 @@ class ChatService {
 
   final String initialPath = "/chat";
 
-  Future<List<ChatRoom>?> getRooms(String filter) async {
+  Future<List<ChatRoom>?> getRoomsByUser(String userId) async {
+    String path = "$initialPath/getRoomsByUser";
+    var response = await _httpService.get(path, queryParameters: {'userId' : userId});
+    if (response?.status == 200 && response?.content != null) {
+      List content = response!.content;
+      List<ChatRoom> chatRoom = content.map((e) => ChatRoom.fromJson(e)).toList();
+      return chatRoom;
+    }
+    return null;
+  }
+
+  Future<List<ChatRoom>?> getRooms() async {
     String path = "$initialPath/getRooms";
     var response = await _httpService.get(path);
     if (response?.status == 200 && response?.content != null) {
@@ -43,13 +54,14 @@ class ChatService {
     return null;
   }
 
-  Future<ChatRoom?> startChat(String name, String content) async {
+  Future<ChatRoom?> startChat(String? id, String name, String content) async {
     String path = "$initialPath/start";
-    var data = {
-      'userName': name,
+    var body = {
+      'id' : id,
+      'username': name,
       'content': content,
     };
-    var response = await _httpService.post(path, data);
+    var response = await _httpService.post(path, queryParameters: body);
 
     // Check if response is not null and has a status code of 200
     if (response != null && response.status == 200) {

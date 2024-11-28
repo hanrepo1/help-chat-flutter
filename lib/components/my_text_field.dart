@@ -14,6 +14,7 @@ class MyTextField extends StatelessWidget {
 	final String? Function(String?)? onChanged;
   final int? maxLength;
   final int maxLines;
+  final bool? enable;
 
 	const MyTextField({
     super.key,
@@ -29,12 +30,14 @@ class MyTextField extends StatelessWidget {
 		this.errorMsg,
 		this.onChanged,
     this.maxLength,
-    required this.maxLines
+    required this.maxLines,
+    this.enable,
   });
 	
 	@override
 	Widget build(BuildContext context) {
 		return TextFormField(
+      enabled: enable,
       maxLength: maxLength,
       maxLines: maxLines,
       validator: validator,

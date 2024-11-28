@@ -188,6 +188,8 @@ class _ChatPageStates extends State<ChatPage> {
       child: ListView.builder(
         itemCount: chatContent.length,
         itemBuilder: (context, index) {
+          log("isAgent : ${chatContent[index].isAgent}");
+          log("nameUser : ${chatContent[index].userName}");
           return ListTile(
             title: Text(
               chatContent[index].isAgent!
@@ -216,7 +218,7 @@ class _ChatPageStates extends State<ChatPage> {
               keyboardType: TextInputType.text,
               obscureText: false,
               maxLength: 255,
-              maxLines: 3,
+              maxLines: 1,
               hintText: "Send a Message",
               suffixIcon: IconButton(
                 onPressed: () {

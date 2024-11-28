@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -34,9 +35,9 @@ class HTTPService {
     );
   }
 
-  Future<ApiResponse?> post(String path, Map<String, dynamic> queryParameters) async {
+  Future<ApiResponse?> post(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await _dio.post(path, queryParameters: queryParameters);
+      final response = await _dio.post(path, data: queryParameters != null ? jsonEncode(queryParameters) : null,);
       return _handleResponse(response);
     } catch (e) {
       log('Error: $e');
@@ -73,7 +74,7 @@ class HTTPService {
     //   return ApiResponse(
     //     success: false,
     //     status: response.statusCode ?? 500,
-    //     content: null,
+    //     content: response.data,
     //     timestamp: DateTime.now().toIso8601String(),
     //   );
     // }
